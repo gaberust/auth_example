@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import mongoose, {Schema} from 'mongoose';
+import {MongoClient} from 'mongodb';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -17,7 +17,7 @@ dotenv.config();
 const config = {
     PORT: parseInt((process.env.PORT || 3000).toString().trim()),
     ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || '*').toString().trim().split(/[\s,]+/),
-    MONGODB_CONNECTION_STRING: (process.env.MONGODB_CONNECTION_STRING || 'mongodb://localhost/example').toString().trim(),
+    MONGODB_CONNECTION_STRING: (process.env.MONGODB_CONNECTION_STRING || '').toString().trim(),
     TOKEN_LIFETIME: (process.env.TOKEN_LIFETIME || '7d').toString().trim()
 };
 
@@ -71,20 +71,17 @@ const verifyToken = async (token) => {
  * MONGODB STUFF
  */
 
-mongoose.set('strictQuery', false);
-await mongoose.connect(config.MONGODB_CONNECTION_STRING);
+const mongoClient = new MongoClient(config.MONGODB_CONNECTION_STRING);
 
-const User = mongoose.model('User', new Schema({
-    username: {
-        type: String,
-        required: true,
-        maxlength: 12
-    },
-    password: {
-        type: String,
-        required: true
-    }
-}));
+let conn;
+try {
+    conn = await mongoClient.connect();
+} catch (e) {
+    console.error(e);
+    process.exit(1);
+}
+
+let db = conn.db('example');
 
 /**
  * EXPRESS SETUP
@@ -105,7 +102,8 @@ const authRequired = async (req, res, next) => {
     if (token) {
         const payload = await verifyToken(token);
         if (payload) {
-            req.user = await User.findById(payload.userId);
+            let users = await db.collection('users');
+            req.user = await users.findOne({'_id': payload.userId})
             if (req.user) {
                 return next();
             }
@@ -134,9 +132,11 @@ app.get('/me', authRequired, async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-    const user = await User.findOne({username: req.body.username});
+    let {username, password} = req.body;
+    let users = await db.collection('users');
+    const user = await users.findOne({username});
     if (user) {
-        if (await bcrypt.compare(req.body.password, user.password)) {
+        if (await bcrypt.compare(password, user.password)) {
             const token = await createToken({
                 userId: user.id
             });
