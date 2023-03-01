@@ -143,22 +143,28 @@ app.get('/me', authRequired, async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-    let {username, password} = req.body;
-    const user = await User.findOne({username});
-    if (user) {
-        if (await bcrypt.compare(password, user.password)) {
-            const token = await createToken({
-                userId: user.id
-            });
-            res.cookie('auth_token', token);
-            return res.send({
-                message: 'Login Success'
-            });
+    try {
+        let {username, password} = req.body;
+        const user = await User.findOne({username});
+        if (user) {
+            if (await bcrypt.compare(password, user.password)) {
+                const token = await createToken({
+                    userId: user.id
+                });
+                res.cookie('auth_token', token);
+                return res.send({
+                    message: 'Login Success'
+                });
+            }
         }
+        return res.status(401).send({
+            error: 'Invalid Credentials'
+        });
+    } catch (e) {
+        return res.status(400).send({
+            error: 'Bad Request'
+        });
     }
-    return res.status(401).send({
-        error: 'Invalid Credentials'
-    });
 });
 
 /**
