@@ -17,7 +17,7 @@ dotenv.config();
 const config = {
     PORT: parseInt((process.env.PORT || 3000).toString().trim()),
     ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || '*').toString().trim().split(/[\s,]+/),
-    MONGODB_CONNECTION_STRING: (process.env.MONGODB_CONNECTION_STRING || '').toString().trim(),
+    MONGODB_CONNECTION_STRING: (process.env.MONGODB_CONNECTION_STRING || 'mongodb://127.0.0.1').toString().trim(),
     TOKEN_LIFETIME: (process.env.TOKEN_LIFETIME || '7d').toString().trim()
 };
 
