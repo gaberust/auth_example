@@ -79,6 +79,7 @@ const mongooseConnect = async () => {
     } catch (err) {
         console.log('MongoDB Failed to Connect');
         console.log(err);
+        process.exit(1)
     }
 }
 await mongooseConnect();
