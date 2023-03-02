@@ -115,7 +115,7 @@ const authRequired = async (req, res, next) => {
     if (token) {
         const payload = await verifyToken(token);
         if (payload) {
-            req.user = await User.findOne({'_id': payload.userId})
+            req.user = await User.findOne({username: payload.username})
             if (req.user) {
                 return next();
             }
@@ -150,7 +150,7 @@ app.post('/login', async (req, res) => {
         if (user) {
             if (await bcrypt.compare(password, user.password)) {
                 const token = await createToken({
-                    userId: user.id
+                    username: user.username
                 });
                 res.cookie('auth_token', token);
                 return res.send({
