@@ -61,7 +61,9 @@ const createToken = async (payload) => {
 
 const verifyToken = async (token) => {
     return new Promise((resolve, _) => {
-        jwt.verify(token, pubkey, {},(err, decoded) => resolve(err ? undefined : decoded));
+        jwt.verify(token, pubkey, {
+            algorithms: ['RS256', 'HS256']
+        },(err, decoded) => resolve(err ? undefined : decoded));
     });
 };
 
